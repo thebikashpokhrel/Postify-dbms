@@ -13,7 +13,7 @@ END $$
 DELIMITER ;
 
 
---Hash the Password before inserting new user
+--Hash the Password, generate random id before inserting new user
 DELIMITER $$
 
 CREATE TRIGGER before_user_insert
@@ -21,18 +21,10 @@ BEFORE INSERT ON users
 FOR EACH ROW
 BEGIN
   SET NEW.password = SHA2(NEW.password, 256);
+  IF NEW.id IS NULL THEN
+    SET NEW.id = UUID();
+  END IF;
 END $$
 
 DELIMITER ;
 
--- Generate Random Id for each user insertion with UUID()
-DELIMITER $$
-
-CREATE TRIGGER before_user_insert
-BEFORE INSERT ON users
-FOR EACH ROW
-BEGIN
-  SET NEW.id = UUID();
-END $$
-
-DELIMITER ;

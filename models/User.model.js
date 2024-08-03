@@ -14,13 +14,13 @@ class User {
   static async initialize() {
     try {
       const sql = `CREATE TABLE IF NOT EXISTS users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            firstname VARCHAR(50) NOT NULL,
-            lastname VARCHAR(50) NOT NULL,
-            username VARCHAR(50) NOT NULL UNIQUE,
-            email VARCHAR(100) NOT NULL UNIQUE,
-            password VARCHAR(255) NOT NULL
-            );`;
+              id CHAR(36) PRIMARY KEY,
+              firstname VARCHAR(50) NOT NULL,
+              lastname VARCHAR(50) NOT NULL,
+              username VARCHAR(50) NOT NULL UNIQUE,
+              email VARCHAR(100) NOT NULL UNIQUE,
+              password VARCHAR(255) NOT NULL
+              );`;
 
       await db.query(sql);
     } catch (error) {
@@ -34,7 +34,7 @@ class User {
       //If there is id just update the existing record
       if (this.id) {
         // Update existing record
-        const [result] = await db.connection.query(
+        await db.connection.query(
           "UPDATE users SET firstname = ?, lastname = ?, username = ?, email = ?, password = ? WHERE id = ?",
           [
             this.firstname,
@@ -45,12 +45,10 @@ class User {
             this.id,
           ]
         );
-
-        return result;
       }
 
       //if there is no id create a new record
-      const [result] = await db.connection.query(
+      await db.connection.query(
         "INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ?, ?)",
         [
           this.firstname,
@@ -61,14 +59,11 @@ class User {
         ]
       );
 
-      const inserted = await this.findByEmailAndPassword(
-        this.email,
-        this.password
-      );
+      const user = await User.findByEmailAndPassword(this.email, this.password);
 
-      this.id = inserted.id;
-
-      return result;
+      this.id = user.id;
+      this.password = user.password;
+      return this;
     } catch (error) {
       console.log(error);
     }
@@ -164,7 +159,7 @@ class User {
   }
 
   static async findOne(conditions) {
-    const result = await this.findWhere(conditions);
+    const result = await User.findWhere(conditions);
     return result[0];
   }
 

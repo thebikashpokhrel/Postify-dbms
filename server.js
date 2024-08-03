@@ -4,7 +4,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { db } from "./config/Database.js";
 import User from "./models/User.model.js";
+import Post from "./models/Post.model.js";
+import Category from "./models/Category.model.js";
+import Comment from "./models/Comment.model.js";
 import userRoutes from "./routes/user.routes.js";
+import postRoutes from "./routes/post.routes.js";
 
 dotenv.config();
 
@@ -25,14 +29,15 @@ app.get("/", async (req, res) => {
 });
 
 app.use("/api/user", userRoutes);
+app.use("/api/post", postRoutes);
 
 app.listen(PORT, () => {
   (async () => {
     await db.connect();
     await User.initialize();
-
-    const user = await User.findByEmailAndPassword("thebikash@gmail.com", 124);
-    console.log(user);
+    await Category.initialize();
+    await Post.initialize();
+    await Comment.initialize();
   })();
 
   console.log(`Server Started at ${PORT}`);
