@@ -4,7 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { db } from "./config/Database.js";
 import User from "./models/User.model.js";
-import Post from "./models/Post.model.js";
+import userRoutes from "./routes/user.routes.js";
 
 dotenv.config();
 
@@ -24,15 +24,14 @@ app.get("/", async (req, res) => {
   res.send("API Root");
 });
 
+app.use("/api/user", userRoutes);
+
 app.listen(PORT, () => {
   (async () => {
     await db.connect();
     await User.initialize();
 
-    const user = await User.findByIdAndUpdate(14, {
-      firstname: "Bkkkk",
-    });
-
+    const user = await User.findByEmailAndPassword("thebikash@gmail.com", 124);
     console.log(user);
   })();
 

@@ -61,7 +61,12 @@ class User {
         ]
       );
 
-      this.id = result.insertId;
+      const inserted = await this.findByEmailAndPassword(
+        this.email,
+        this.password
+      );
+
+      this.id = inserted.id;
 
       return result;
     } catch (error) {
@@ -118,6 +123,71 @@ class User {
       }
 
       return await User.findById(id);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  //Findwhere method
+  static async findWhere(conditions) {
+    try {
+      const fields = [];
+      const values = [];
+
+      // Add fields and values based on provided conditions
+      for (const [key, value] of Object.entries(conditions)) {
+        fields.push(`${key} = ?`);
+        values.push(value);
+      }
+
+      // dynamic SQL query
+      const query = `SELECT * FROM users WHERE ${fields.join(" AND ")}`;
+
+      const [rows] = await db.connection.query(query, values);
+
+      return rows.map(
+        (row) =>
+          new User(
+            row.firstname,
+            row.lastname,
+            row.username,
+            row.email,
+            row.password,
+            row.id
+          )
+      );
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  static async findOne(conditions) {
+    const result = await this.findWhere(conditions);
+    return result[0];
+  }
+
+  static async findByEmailAndPassword(email, password) {
+    try {
+      const [rows] = await db.connection.query(
+        "CALL SelectUserWithHashedPassword(?, ?)",
+        [email, password]
+      );
+
+      if (rows.length === 0 || rows[0].length === 0) {
+        return null; // No user found with the given email and password
+      }
+
+      const user = rows[0][0]; // Accessing the first result set and the first row
+      return new User(
+        user.firstname,
+        user.lastname,
+        user.username,
+        user.email,
+        user.password,
+        user.id
+      );
     } catch (error) {
       console.log(error);
       throw error;
