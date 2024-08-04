@@ -12,5 +12,6 @@ router.get("/", GetPostsController);
 router.get("/:id", GetPostByIdController);
 router.post("/create", CreatePostController);
 router.get("/delete/:id", DeletePostController);
+router.post("/update", CreatePostController);
 
 export default router;

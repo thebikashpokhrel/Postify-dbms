@@ -6,56 +6,30 @@ class Category {
     this.name = name;
   }
 
-  // Table creation method
+  // Table Creation Method
   static async initialize() {
     try {
-      const sql = `CREATE TABLE IF NOT EXISTS categories (
-        category_id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL
-      );`;
+      const sql = `
+        CREATE TABLE IF NOT EXISTS categories (
+          category_id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL
+        );`;
 
-      await db.query(sql);
+      await db.connection.query(sql);
     } catch (error) {
       console.log(error);
     }
   }
 
-  // Save category
-  async save() {
-    try {
-      const [result] = await db.connection.query(
-        "INSERT INTO categories (name) VALUES (?)",
-        [this.name]
-      );
-
-      this.category_id = result.insertId;
-      return result;
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  }
-
-  // Find all categories
-  static async find() {
-    try {
-      const [rows] = await db.connection.query("SELECT * FROM categories");
-      return rows.map((row) => new Category(row.category_id, row.name));
-    } catch (error) {
-      console.log(error);
-      throw error;
-    }
-  }
-
-  // Find category by ID
-  static async findById(category_id) {
+  // Find a category by ID
+  static async findById(categoryId) {
     try {
       const [rows] = await db.connection.query(
         "SELECT * FROM categories WHERE category_id = ?",
-        [category_id]
+        [categoryId]
       );
       if (rows.length === 0) {
-        return null; // No category found with the given id
+        return null;
       }
       const category = rows[0];
       return new Category(category.category_id, category.name);
@@ -65,14 +39,11 @@ class Category {
     }
   }
 
-  // Count the number of posts in a category
-  static async countPosts(category_id) {
+  // Find all categories
+  static async findAll() {
     try {
-      const [rows] = await db.connection.query(
-        "SELECT COUNT(*) AS postCount FROM posts WHERE category_id = ?",
-        [category_id]
-      );
-      return rows[0].postCount;
+      const [rows] = await db.connection.query("SELECT * FROM categories");
+      return rows.map((row) => new Category(row.category_id, row.name));
     } catch (error) {
       console.log(error);
       throw error;

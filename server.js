@@ -7,8 +7,10 @@ import User from "./models/User.model.js";
 import Post from "./models/Post.model.js";
 import Category from "./models/Category.model.js";
 import Comment from "./models/Comment.model.js";
+import PostCategory from "./models/PostCategory.model.js";
 import userRoutes from "./routes/user.routes.js";
 import postRoutes from "./routes/post.routes.js";
+import categoryRoutes from "./routes/category.routes.js";
 
 dotenv.config();
 
@@ -30,6 +32,7 @@ app.get("/", async (req, res) => {
 
 app.use("/api/user", userRoutes);
 app.use("/api/post", postRoutes);
+app.use("/api/category", categoryRoutes);
 
 app.listen(PORT, () => {
   (async () => {
@@ -38,6 +41,7 @@ app.listen(PORT, () => {
     await Category.initialize();
     await Post.initialize();
     await Comment.initialize();
+    await PostCategory.initialize();
   })();
 
   console.log(`Server Started at ${PORT}`);

@@ -70,7 +70,6 @@ class User {
   }
 
   //Finding user by id
-
   static async findById(id) {
     try {
       const [rows] = await db.connection.query(
@@ -158,11 +157,13 @@ class User {
     }
   }
 
+  //Findone Method
   static async findOne(conditions) {
     const result = await User.findWhere(conditions);
     return result[0];
   }
 
+  //Find By Email and Password
   static async findByEmailAndPassword(email, password) {
     try {
       const [rows] = await db.connection.query(
