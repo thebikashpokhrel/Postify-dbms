@@ -42,6 +42,13 @@ export const CreatePostController = async function (req, res) {
       newPost = new Post(userId, title, content);
     } else {
       newPost = await Post.findById(postId);
+
+      if (newPost.user_id != req.userId) {
+        return res.status(400).json({
+          message: "Unauthorized request",
+        });
+      }
+
       newPost.title = title;
       newPost.content = content;
     }
