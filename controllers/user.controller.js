@@ -1,4 +1,4 @@
-import User from "../models/User.model.js";
+import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 
 export const SignUpController = async function (req, res) {
@@ -78,6 +78,22 @@ export const SignInController = async function (req, res) {
     console.log(error);
     return res.status(500).json({
       error: "Internal server error",
+    });
+  }
+};
+
+export const SignOutController = async function (req, res) {
+  try {
+    res.cookie("postify_token", "", {
+      maxAge: 0,
+    });
+
+    return res.status(200).json({
+      message: "Signed Out Successfully",
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Internal Server Error",
     });
   }
 };

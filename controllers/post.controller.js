@@ -33,7 +33,8 @@ export const GetPostByIdController = async function (req, res) {
 
 export const CreatePostController = async function (req, res) {
   try {
-    const { title, content, userId, categoryIds, postId } = req.body;
+    const { title, content, categoryIds, postId } = req.body;
+    const userId = req.userId;
     let newPost = null;
     console.log(categoryIds);
 
@@ -71,6 +72,13 @@ export const CreatePostController = async function (req, res) {
 
 export const DeletePostController = async function (req, res) {
   try {
+    const postToDelete = await Post.findById(req.params.id);
+    if (postToDelete.userId != req.userId) {
+      return res.status(400).json({
+        message: "Uauthorized request",
+      });
+    }
+
     const deleted = await Post.deleteById(req.params.id);
     if (deleted) {
       return res.status(200).json({
@@ -79,6 +87,21 @@ export const DeletePostController = async function (req, res) {
     }
     return res.status(400).json({
       message: "Error while deleteting the post",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: "Internal server error",
+    });
+  }
+};
+
+export const GetPostsByUserIdController = async function (req, res) {
+  try {
+    const post = await Post.findAllWithUser(req.params.id);
+    res.status(200).json({
+      post,
+      message: "Posts fetched successfully",
     });
   } catch (error) {
     console.log(error);

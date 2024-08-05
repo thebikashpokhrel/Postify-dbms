@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { db } from "./config/Database.js";
-import User from "./models/User.model.js";
+import User from "./models/user.model.js";
 import Post from "./models/Post.model.js";
 import Category from "./models/Category.model.js";
 import Comment from "./models/Comment.model.js";
@@ -11,6 +11,8 @@ import PostCategory from "./models/PostCategory.model.js";
 import userRoutes from "./routes/user.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
+import commentRoutes from "./routes/comment.routes.js";
+import { authenticate } from "./middlewares/auth.middleware.js";
 
 dotenv.config();
 
@@ -33,6 +35,7 @@ app.get("/", async (req, res) => {
 app.use("/api/user", userRoutes);
 app.use("/api/post", postRoutes);
 app.use("/api/category", categoryRoutes);
+app.use("/api/comment", commentRoutes);
 
 app.listen(PORT, () => {
   (async () => {
