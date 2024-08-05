@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-export class Database {
+class Database {
   constructor({ host, user, password, database }) {
     this.host = host;
     this.user = user;

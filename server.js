@@ -12,7 +12,6 @@ import userRoutes from "./routes/user.routes.js";
 import postRoutes from "./routes/post.routes.js";
 import categoryRoutes from "./routes/category.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
-import { authenticate } from "./middlewares/auth.middleware.js";
 
 dotenv.config();
 
@@ -47,5 +46,5 @@ app.listen(PORT, () => {
     await PostCategory.initialize();
   })();
 
-  console.log(`Server Started at ${PORT}`);
+  console.log(`Server running at ${PORT}`);
 });
