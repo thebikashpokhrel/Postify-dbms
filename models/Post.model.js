@@ -88,16 +88,17 @@ class Post {
   static async findByIdWithDetails(postId) {
     try {
       const query = `
-      SELECT p.*, 
-             u.firstname, u.lastname, u.username, u.email, 
-             c.comment_id, c.user_id AS comment_user_id, c.content AS comment_content, c.created_at AS comment_created_at,
-             pc.category_id, cat.name AS category_name
-      FROM posts p 
-      JOIN users u ON p.user_id = u.id 
-      LEFT JOIN comments c ON p.post_id = c.post_id
-      LEFT JOIN post_categories pc ON p.post_id = pc.post_id
-      LEFT JOIN categories cat ON pc.category_id = cat.category_id
-      WHERE p.post_id = ?`;
+    SELECT p.*, 
+           u.firstname, u.lastname, u.username, u.email, 
+           c.comment_id, c.user_id AS comment_user_id, c.content AS comment_content, c.created_at AS comment_created_at,
+           pc.category_id, cat.name AS category_name,
+           (SELECT COUNT(*) FROM comments WHERE comments.post_id = p.post_id) AS comment_count
+    FROM posts p 
+    JOIN users u ON p.user_id = u.id 
+    LEFT JOIN comments c ON p.post_id = c.post_id
+    LEFT JOIN post_categories pc ON p.post_id = pc.post_id
+    LEFT JOIN categories cat ON pc.category_id = cat.category_id
+    WHERE p.post_id = ?`;
 
       const [rows] = await db.connection.query(query, [postId]);
 
@@ -111,6 +112,7 @@ class Post {
         title: rows[0].title,
         content: rows[0].content,
         created_at: rows[0].created_at,
+        comment_count: rows[0].comment_count,
         user: {
           id: rows[0].user_id,
           firstname: rows[0].firstname,
@@ -153,29 +155,53 @@ class Post {
   //Find the posts with given user id
   static async findWithUserId(user_id) {
     try {
-      const [rows] = await db.connection.query(
-        `
-      SELECT Posts.*
-      FROM Posts
-      JOIN Users ON Posts.user_id = Users.id
-      WHERE Users.id = ?
-    `,
-        [user_id]
-      );
-      return rows.map((row) => ({
-        post: new Post(
-          row.user_id,
-          row.title,
-          row.content,
-          row.post_id,
-          row.created_at
-        ),
-        user: {
-          firstname: row.firstname,
-          lastname: row.lastname,
-          email: row.email,
-        },
-      }));
+      const query = `
+        SELECT 
+          p.*, 
+          u.firstname, u.lastname, u.username, u.email,
+          c.comment_id, c.user_id AS comment_user_id, c.content AS comment_content, c.created_at AS comment_created_at,
+          (SELECT COUNT(*) FROM comments WHERE comments.post_id = p.post_id) AS comment_count
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN comments c ON p.post_id = c.post_id
+        WHERE u.id = ?`;
+
+      const [rows] = await db.connection.query(query, [user_id]);
+
+      const posts = {};
+
+      rows.forEach((row) => {
+        if (!posts[row.post_id]) {
+          posts[row.post_id] = {
+            post: new Post(
+              row.user_id,
+              row.title,
+              row.content,
+              row.post_id,
+              row.created_at
+            ),
+            comment_count: row.comment_count,
+            user: {
+              firstname: row.firstname,
+              lastname: row.lastname,
+              username: row.username,
+              email: row.email,
+            },
+            comments: [],
+          };
+        }
+
+        if (row.comment_id) {
+          posts[row.post_id].comments.push({
+            comment_id: row.comment_id,
+            user_id: row.comment_user_id,
+            content: row.comment_content,
+            created_at: row.comment_created_at,
+          });
+        }
+      });
+
+      return Object.values(posts);
     } catch (error) {
       console.log(error);
       throw error;
@@ -242,27 +268,52 @@ class Post {
   }
 
   // Find all posts with user details by joining tables
-  static async findAllWithUser() {
+  static async findAllWithDetails() {
     try {
       const [rows] = await db.connection.query(`
-      SELECT Posts.*, Users.firstname, Users.lastname, Users.username, Users.email
-      FROM Posts
-      JOIN Users ON Posts.user_id = Users.id
-    `);
-      return rows.map((row) => ({
-        post: new Post(
-          row.user_id,
-          row.title,
-          row.content,
-          row.post_id,
-          row.created_at
-        ),
-        user: {
-          firstname: row.firstname,
-          lastname: row.lastname,
-          email: row.email,
-        },
-      }));
+        SELECT 
+          p.*, 
+          u.firstname, u.lastname, u.username, u.email,
+          (SELECT COUNT(*) FROM comments WHERE comments.post_id = p.post_id) AS comment_count,
+          pc.category_id, cat.name AS category_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN post_categories pc ON p.post_id = pc.post_id
+        LEFT JOIN categories cat ON pc.category_id = cat.category_id
+      `);
+
+      const posts = {};
+
+      rows.forEach((row) => {
+        if (!posts[row.post_id]) {
+          posts[row.post_id] = {
+            post: new Post(
+              row.user_id,
+              row.title,
+              row.content,
+              row.post_id,
+              row.created_at
+            ),
+            user: {
+              firstname: row.firstname,
+              lastname: row.lastname,
+              username: row.username,
+              email: row.email,
+            },
+            comment_count: row.comment_count,
+            categories: [],
+          };
+        }
+
+        if (row.category_id) {
+          posts[row.post_id].categories.push({
+            category_id: row.category_id,
+            name: row.category_name,
+          });
+        }
+      });
+
+      return Object.values(posts);
     } catch (error) {
       console.log(error);
       throw error;

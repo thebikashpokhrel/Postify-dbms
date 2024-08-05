@@ -2,7 +2,7 @@ import Post from "../models/Post.model.js";
 
 export const GetPostsController = async function (req, res) {
   try {
-    const result = await Promise.all([Post.findAllWithUser(), Post.count()]);
+    const result = await Promise.all([Post.findAllWithDetails(), Post.count()]);
     res.status(200).json({
       posts: result[0], //Array of posts
       count: result[1], //Total number of posts count
@@ -98,9 +98,9 @@ export const DeletePostController = async function (req, res) {
 
 export const GetPostsByUserIdController = async function (req, res) {
   try {
-    const post = await Post.findAllWithUser(req.params.id);
+    const posts = await Post.findWithUserId(req.params.id);
     res.status(200).json({
-      post,
+      posts,
       message: "Posts fetched successfully",
     });
   } catch (error) {
