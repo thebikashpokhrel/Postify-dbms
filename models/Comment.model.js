@@ -51,35 +51,43 @@ class Comment {
       throw error;
     }
   }
-  // Finding comments by post ID
+  // Find comments by postId with user info and count of comments
   static async findByPostId(postId) {
     try {
       const query = `
-        SELECT 
-          c.*, 
-          (SELECT COUNT(*) FROM comments WHERE post_id = ?) AS comment_count 
-        FROM comments c 
-        WHERE c.post_id = ?`;
+      SELECT c.*, 
+             u.firstname, u.lastname, u.username, u.email,
+             COUNT(*) OVER() AS total_comments
+      FROM comments c
+      JOIN users u ON c.user_id = u.id
+      WHERE c.post_id = ?
+      ORDER BY c.created_at ASC`;
 
-      const [rows] = await db.connection.query(query, [postId, postId]);
+      const [rows] = await db.connection.query(query, [postId]);
 
       if (rows.length === 0) {
-        return { comments: [], comment_count: 0 }; // No comments found for the given post ID
+        return { comments: [], totalComments: 0 }; // No comments found for the given postId
       }
 
-      const comments = rows.map(
-        (row) =>
-          new Comment(
-            row.post_id,
-            row.user_id,
-            row.content,
-            row.created_at,
-            row.comment_id
-          )
-      );
-      const commentCount = rows[0].comment_count;
+      const comments = rows.map((row) => ({
+        comment_id: row.comment_id,
+        user_id: row.user_id,
+        post_id: row.post_id,
+        content: row.content,
+        created_at: row.created_at,
+        user: {
+          id: row.user_id,
+          firstname: row.firstname,
+          lastname: row.lastname,
+          username: row.username,
+          email: row.email,
+        },
+      }));
 
-      return { comments, count: commentCount };
+      return {
+        comments,
+        totalComments: rows[0].total_comments,
+      };
     } catch (error) {
       console.log(error);
       throw error;
