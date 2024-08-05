@@ -21,18 +21,54 @@ class Category {
     }
   }
 
-  // Find a category by ID
-  static async findById(categoryId) {
+  // Find a category by ID along with its posts
+  static async findByIdWithPosts(categoryId) {
     try {
-      const [rows] = await db.connection.query(
-        "SELECT * FROM categories WHERE category_id = ?",
-        [categoryId]
-      );
+      const query = `
+      SELECT 
+        c.category_id, c.name, 
+        p.post_id, p.user_id, p.title, p.content, p.created_at,
+        u.firstname, u.lastname, u.username, u.email,
+        (SELECT COUNT(*) FROM comments WHERE comments.post_id = p.post_id) AS comment_count
+      FROM categories c
+      LEFT JOIN post_categories pc ON c.category_id = pc.category_id
+      LEFT JOIN posts p ON pc.post_id = p.post_id
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE c.category_id = ?
+    `;
+      const [rows] = await db.connection.query(query, [categoryId]);
+
       if (rows.length === 0) {
         return null;
       }
-      const category = rows[0];
-      return new Category(category.category_id, category.name);
+
+      const category = {
+        category_id: rows[0].category_id,
+        name: rows[0].name,
+        posts: [],
+      };
+
+      rows.forEach((row) => {
+        if (row.post_id) {
+          category.posts.push({
+            post_id: row.post_id,
+            user_id: row.user_id,
+            title: row.title,
+            content: row.content,
+            created_at: row.created_at,
+            user: {
+              id: row.user_id,
+              firstname: row.firstname,
+              lastname: row.lastname,
+              username: row.username,
+              email: row.email,
+            },
+            comment_count: row.comment_count,
+          });
+        }
+      });
+
+      return category;
     } catch (error) {
       console.log(error);
       throw error;
